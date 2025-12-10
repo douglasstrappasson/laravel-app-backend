@@ -1,0 +1,63 @@
+# Arquivos de ambiente (contêm senhas, chaves e configurações sensíveis)
+.env
+.env.backup
+.env.production
+.env.local
+.env.*.local
+src/.env
+src/.env.backup
+src/.env.production
+
+# Dependências (geradas automaticamente via composer/npm)
+node_modules/
+vendor/
+src/vendor/
+
+# Logs (mudam constantemente e podem conter informações sensíveis)
+*.log
+src/storage/logs/*.log
+src/storage/logs/*.php
+src/storage/logs/*.txt
+
+# Cache e builds (gerados automaticamente pelo Laravel)
+src/bootstrap/cache/*
+!src/bootstrap/cache/.gitignore
+src/storage/framework/cache/*
+src/storage/framework/sessions/*
+src/storage/framework/views/*
+src/storage/framework/testing/*
+
+# Storage (uploads e arquivos gerados pela aplicação)
+src/storage/app/*
+!src/storage/app/.gitignore
+src/storage/app/public/*
+
+# Arquivos compilados e build
+src/public/hot
+src/public/storage
+src/public/build
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE e editores (preferências pessoais)
+.vscode/
+.idea/
+.fleet/
+*.sublime-project
+*.sublime-workspace
+
+# Docker (arquivos temporários)
+.docker/
+
+# Arquivos de teste (cache de resultados)
+.phpunit.result.cache
+src/.phpunit.result.cache
+
+# Arquivos temporários
+*.tmp
+*.temp

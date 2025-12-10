@@ -1,0 +1,99 @@
+# Stage 1: Build
+FROM php:8.3-fpm AS builder
+
+# Instalar dependências do sistema necessárias para compilar
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    libicu-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar extensões PHP necessárias
+RUN docker-php-ext-install \
+    pdo_pgsql \
+    mbstring \
+    intl \
+    pcntl \
+    opcache
+
+# Instalar extensão Redis
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Instalar Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Definir diretório de trabalho
+WORKDIR /var/www
+
+# Copiar arquivos de dependências primeiro (para cache do Docker)
+COPY src/composer.json src/composer.lock ./
+
+# Instalar apenas dependências de produção (sem dev)
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \
+    && composer dump-autoload --optimize --classmap-authoritative
+
+# Stage 2: Production
+FROM php:8.3-fpm
+
+# Instalar apenas dependências runtime (sem ferramentas de build)
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libicu-dev \
+    libpq-dev \
+    gosu \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar extensões PHP (apenas runtime)
+RUN docker-php-ext-install \
+    pdo_pgsql \
+    mbstring \
+    intl \
+    pcntl \
+    opcache
+
+# Instalar extensão Redis
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Copiar configuração do OPcache
+COPY docker/php-opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+
+# Criar usuário sem privilégios
+RUN addgroup --system laravel \
+    && adduser --system --ingroup laravel laravel
+
+# Definir diretório de trabalho
+WORKDIR /var/www
+
+# Copiar código fonte do builder
+COPY --from=builder --chown=laravel:laravel /var/www/vendor ./vendor
+
+# Copiar código da aplicação
+COPY --chown=laravel:laravel src/ ./
+
+# Ajustar permissões
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache \
+    && chown -R laravel:laravel storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# Copiar e configurar script de entrada de produção
+COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Copiar configuração customizada do PHP-FPM
+COPY docker/php-fpm-custom.conf /usr/local/etc/php-fpm.d/zzz-custom.conf
+
+# Expor porta do PHP-FPM
+EXPOSE 9000
+
+# Usar entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["php-fpm"]
+

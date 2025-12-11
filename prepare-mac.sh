@@ -35,9 +35,13 @@ else
     echo "✓ Arquivo src/.env já existe"
 fi
 
+# Garantir que bootstrap/cache existe localmente antes de instalar dependências
+mkdir -p src/bootstrap/cache
+chmod -R 775 src/bootstrap/cache
+
 # Instalar dependências PHP via Composer dentro do container
 echo "📦 Instalando dependências PHP..."
-docker compose run --rm app composer install
+docker compose run --rm app sh -c "mkdir -p /var/www/bootstrap/cache && chmod -R 775 /var/www/bootstrap/cache && composer install"
 
 echo "✅ Preparação concluída!"
 echo "Agora você pode subir os containers com: docker compose up -d --build"

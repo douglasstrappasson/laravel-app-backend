@@ -38,9 +38,15 @@ if (-not (Test-Path "src\.env")) {
     Write-Host "OK: Arquivo src\.env ja existe" -ForegroundColor Green
 }
 
+# Garantir que bootstrap/cache existe localmente antes de instalar dependencias
+if (-not (Test-Path "src\bootstrap\cache")) {
+    New-Item -ItemType Directory -Path "src\bootstrap\cache" -Force | Out-Null
+}
+# No Windows, as permissoes sao gerenciadas pelo Docker
+
 # Instalar dependencias PHP via Composer dentro do container
 Write-Host "Instalando dependencias PHP..." -ForegroundColor Cyan
-docker compose run --rm app composer install
+docker compose run --rm app sh -c "mkdir -p /var/www/bootstrap/cache && chmod -R 775 /var/www/bootstrap/cache && composer install"
 
 Write-Host "Preparacao concluida!" -ForegroundColor Green
 Write-Host "Agora voce pode subir os containers com: docker compose up -d --build" -ForegroundColor Cyan

@@ -34,6 +34,10 @@ WORKDIR /var/www
 # Copiar arquivos do projeto
 COPY src/ /var/www/
 
+# Criar diretórios necessários ANTES do composer install
+RUN mkdir -p /var/www/bootstrap/cache /var/www/storage/logs \
+    && chmod -R 775 /var/www/bootstrap/cache /var/www/storage
+
 # Instalar dependências do Composer (incluindo dev dependencies para desenvolvimento)
 RUN composer install --no-interaction --prefer-dist \
     && composer dump-autoload

@@ -13,6 +13,16 @@ done
 
 echo "PostgreSQL está pronto!"
 
+# Garantir que bootstrap/cache existe e tem permissões corretas
+mkdir -p /var/www/bootstrap/cache
+chmod -R 775 /var/www/bootstrap/cache
+
+# Verificar se vendor existe (necessário para comandos artisan)
+if [ ! -d "/var/www/vendor" ]; then
+    echo "⚠️ Diretório vendor não encontrado. Instalando dependências..."
+    composer install --no-interaction --prefer-dist
+fi
+
 # Verificar se APP_KEY existe, se não, gerar
 if ! grep -q "^APP_KEY=base64:" /var/www/.env 2>/dev/null; then
     echo "APP_KEY não encontrada. Gerando..."
